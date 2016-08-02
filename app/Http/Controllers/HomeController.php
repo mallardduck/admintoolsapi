@@ -76,12 +76,13 @@ class HomeController extends Controller
         if ($domain == null) {
             return response()->json(['error' => "Error in request, domain must be provdied", 'code' => 400]);
         }
-        $domainIp = gethostbyname($domain['host']);
+	$verifiedDomain = (key_exists('host', $domain)) ? $domain['host'] : $domain['path'];
+        $domainIp = gethostbyname($verifiedDomain);
         if(!filter_var($domainIp, FILTER_VALIDATE_IP))
         {
             return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
         }
-        $certificate = SslCertificate::createForHostName($domain['host'], 5);
+        $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
         return response()->json(['valid' => $certificate->isValid()]);
     }
 
@@ -100,14 +101,15 @@ class HomeController extends Controller
         if ($domain == null) {
             return response()->json(['error' => "Error in request, domain must be provdied", 'code' => 400]);
         }
-        $domainIp = gethostbyname($domain['host']);
+        $verifiedDomain = (key_exists('host', $domain)) ? $domain['host'] : $domain['path'];
+        $domainIp = gethostbyname($verifiedDomain);
         if(!filter_var($domainIp, FILTER_VALIDATE_IP))
         {
             return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
         }
-        $certificate = SslCertificate::createForHostName($domain['host'], 5);
+        $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
         $sslRes = [
-            'domain' => $domain['host'],
+            'domain' => $verifiedDomain,
             'domain-ip' => $domainIp,
             'valid' => $certificate->isValid(),
             'ssl-info' => [

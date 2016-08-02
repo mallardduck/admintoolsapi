@@ -24,7 +24,6 @@ class HomeController extends Controller
         // Get needed vars
         $requesterIp = $request->ips();
         $geoIP = $reader->get($requesterIp[0]);
-        //$geoIP = $reader->get('50.133.127.141');
         $userAgent = $request->header('User-Agent');
         $acceptsContentType = $request->header('Accept');
         $rawVar = $request->input('raw');
@@ -51,7 +50,6 @@ class HomeController extends Controller
         // Get needed vars
         $requesterIp = $request->ips();
         $geoIP = $reader->get($requesterIp[0]);
-        //$geoIP = $reader->get('50.133.127.141');
         $userAgent = $request->header('User-Agent');
         $acceptsContentType = $request->header('Accept');
         $rawVar = $request->input('raw');
@@ -84,21 +82,7 @@ class HomeController extends Controller
             return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
         }
         $certificate = SslCertificate::createForHostName($domain['host']);
-        //dd( $certificate );
-        $sslRes = [
-            'domain' => $domain['host'],
-            'domain-ip' => $domainIp,
-            'valid' => $certificate->isValid(),
-            'ssl-info' => [
-                'issuer' => $certificate->getIssuer(),
-                'sans' => $certificate->getAdditionalDomains(),
-                'valid-from' => $certificate->validFromDate(),
-                'valid-to' => $certificate->expirationDate(),
-                'expiration-days' => $certificate->expirationDate()->diffInDays()
-            ]
-        ];
-        dd( $sslRes );
-        return response()->json($sslRes);
+        return response()->json(['valid' => $certificate->isValid()]);
     }
 
     /**
@@ -122,7 +106,6 @@ class HomeController extends Controller
             return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
         }
         $certificate = SslCertificate::createForHostName($domain['host']);
-        //dd( $certificate );
         $sslRes = [
             'domain' => $domain['host'],
             'domain-ip' => $domainIp,

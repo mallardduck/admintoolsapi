@@ -7,6 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Spatie\SslCertificate\Exceptions\CouldNotDownloadCertificate;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
@@ -45,6 +46,9 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $e)
     {
+        if ($e instanceof CouldNotDownloadCertificate) {
+            return response()->json(['error' => "Timeout; the domain may not support SSL.", 'code' => 200]);
+        }
         return parent::render($request, $e);
     }
 }

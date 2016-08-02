@@ -19,7 +19,7 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $databaseFile = '/home/dan/public_html/tools/storage/app/maxmind/GeoLite2-City.mmdb';
+        $databaseFile = './geoDb.mmdb';
         $reader = new Reader($databaseFile);
         // Get needed vars
         $requesterIp = $request->ips();
@@ -46,7 +46,7 @@ class HomeController extends Controller
      */
     public function indexJson(Request $request)
     {
-        $databaseFile = '/home/dan/public_html/tools/storage/app/maxmind/GeoLite2-City.mmdb';
+        $databaseFile = './geoDb.mmdb';
         $reader = new Reader($databaseFile);
         // Get needed vars
         $requesterIp = $request->ips();

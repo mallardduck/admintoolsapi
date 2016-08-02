@@ -81,7 +81,7 @@ class HomeController extends Controller
         {
             return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
         }
-        $certificate = SslCertificate::createForHostName($domain['host']);
+        $certificate = SslCertificate::createForHostName($domain['host'], 5);
         return response()->json(['valid' => $certificate->isValid()]);
     }
 
@@ -105,7 +105,7 @@ class HomeController extends Controller
         {
             return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
         }
-        $certificate = SslCertificate::createForHostName($domain['host']);
+        $certificate = SslCertificate::createForHostName($domain['host'], 5);
         $sslRes = [
             'domain' => $domain['host'],
             'domain-ip' => $domainIp,

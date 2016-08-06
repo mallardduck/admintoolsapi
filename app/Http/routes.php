@@ -14,5 +14,5 @@
 Route::get('/', 'HomeController@index');
 Route::get('/ip', 'HomeController@index');
 Route::get('/ip.json', 'HomeController@indexJson');
-Route::get('/sslcheck', 'HomeController@ssltest');
-Route::get('/sslcheck.json', 'HomeController@ssltestJson');
+Route::get('/sslcheck', 'HomeController@sslIndex');
+Route::get('/sslcheck.json', 'HomeController@sslIndexJson');

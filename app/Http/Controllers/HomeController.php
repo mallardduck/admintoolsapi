@@ -19,23 +19,10 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $databaseFile = './geoDb.mmdb';
-        $reader = new Reader($databaseFile);
-        // Get needed vars
-        $requesterIp = $request->ips();
-        $geoIP = $reader->get($requesterIp[0]);
-        $userAgent = $request->header('User-Agent');
-        $acceptsContentType = $request->header('Accept');
+        // Get IP info results
         $rawVar = $request->input('raw');
-        $jsonVars = [
-            'ips' => $requesterIp,
-            'user-agent' => $userAgent,
-            'local-city' => $geoIP['city']['names']['en']
-            ];
-        if ( (stripos($userAgent, 'curl') !== false && ($acceptsContentType == '*/*')) || ( !is_null($rawVar) && ($rawVar != 0 || $rawVar == "") ) ) {
-            return $requesterIp[0];
-        }
-        return response()->json($jsonVars);
+        $results = $this->getIPinfo($request, $rawVar);
+        return $results;
     }
 
     /**
@@ -45,20 +32,28 @@ class HomeController extends Controller
      */
     public function indexJson(Request $request)
     {
-        $databaseFile = './geoDb.mmdb';
-        $reader = new Reader($databaseFile);
+        // Get IP info results
+        $results = $this->getIPinfo($request);
+        return response()->json($results);
+    }
+
+    private function getIPinfo(Request $request, $raw=null) {
         // Get needed vars
         $requesterIp = $request->ips();
+        if ( !is_null($raw) && ($raw != 0 || $raw == "") ) {
+            return $requesterIp['0'];
+        }
+        $databaseFile = './geoDb.mmdb';
+        $reader = new Reader($databaseFile);
+        // Get IP info
         $geoIP = $reader->get($requesterIp[0]);
         $userAgent = $request->header('User-Agent');
         $acceptsContentType = $request->header('Accept');
-        $rawVar = $request->input('raw');
-        $jsonVars = [
+        return [
             'ips' => $requesterIp,
             'user-agent' => $userAgent,
             'local-city' => $geoIP['city']['names']['en']
             ];
-        return response()->json($jsonVars);
     }
 
     /**
@@ -66,24 +61,10 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function ssltest(Request $request)
+    public function sslIndex(Request $request)
     {
-        // Get needed vars
-        $requesterIp = $request->ips();
-        $userAgent = $request->header('User-Agent');
-        $acceptsContentType = $request->header('Accept');
-        $domain = ($request->input('domain')) ? parse_url($request->input('domain')) : null;
-        if ($domain == null) {
-            return response()->json(['error' => "Error in request, domain must be provdied", 'code' => 400]);
-        }
-	$verifiedDomain = (key_exists('host', $domain)) ? $domain['host'] : $domain['path'];
-        $domainIp = gethostbyname($verifiedDomain);
-        if(!filter_var($domainIp, FILTER_VALIDATE_IP))
-        {
-            return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
-        }
-        $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
-        return response()->json(['valid' => $certificate->isValid()]);
+        $results = $this->sslchecker($request);
+        return response()->json($results);
     }
 
     /**
@@ -91,36 +72,55 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function ssltestJson(Request $request)
+    public function sslIndexJson(Request $request)
     {
+        $results = $this->sslchecker($request, true);
+        return response()->json($results);
+    }
+
+    private function sslchecker(Request $request, $full=false) {
         // Get needed vars
         $requesterIp = $request->ips();
         $userAgent = $request->header('User-Agent');
         $acceptsContentType = $request->header('Accept');
-        $domain = ($request->input('domain')) ? parse_url($request->input('domain')) : null;
-        if ($domain == null) {
-            return response()->json(['error' => "Error in request, domain must be provdied", 'code' => 400]);
+        $rawDomain = $request->input('domain');
+        // Verify '//' is in input to validate URL properly
+        if (!preg_match('#//#', $request->input('domain'))) {
+            $rawDomain = '//'.$request->input('domain');
         }
-        $verifiedDomain = (key_exists('host', $domain)) ? $domain['host'] : $domain['path'];
+        // Parse URL, appending the '//' helps increase likelyhood we get a host component.
+        $domain = ($rawDomain) ? parse_url($rawDomain) : null;
+        if (key_exists('host', $domain) == false) {
+            return ['error' => "Error in request, proper domain and/or URL must be provdied", 'code' => 400];
+        }
+        $verifiedDomain = $domain['host'];
+        // Attempt to get IP for domain provided and verify it
         $domainIp = gethostbyname($verifiedDomain);
         if(!filter_var($domainIp, FILTER_VALIDATE_IP))
         {
-            return response()->json(['error' => "Domain might be valid, but DNS is not.", 'code' => 200]);
+            return ['error' => "Domain might be valid, but DNS is not.", 'code' => 200];
         }
-        $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
-        $sslRes = [
-            'domain' => $verifiedDomain,
-            'domain-ip' => $domainIp,
-            'valid' => $certificate->isValid(),
-            'ssl-info' => [
-                'issuer' => $certificate->getIssuer(),
-                'sans' => $certificate->getAdditionalDomains(),
-                'valid-from' => $certificate->validFromDate(),
-                'valid-to' => $certificate->expirationDate(),
-                'expiration-days' => $certificate->expirationDate()->diffInDays()
-            ]
-        ];
-        return response()->json($sslRes);
+        // Verify SSL
+        if ($full=true){
+            $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
+            $sslRes = [
+                'domain' => $verifiedDomain,
+                'domain-ip' => $domainIp,
+                'valid' => $certificate->isValid(),
+                'ssl-info' => [
+                    'issuer' => $certificate->getIssuer(),
+                    'sans' => $certificate->getAdditionalDomains(),
+                    'valid-from' => $certificate->validFromDate(),
+                    'valid-to' => $certificate->expirationDate(),
+                    'expiration-days' => $certificate->expirationDate()->diffInDays()
+                ]
+            ];
+        } else {
+            $sslRes = SslCertificate::createForHostName($verifiedDomain, 5);
+
+        }
+        // return output
+        return $sslRes;
     }
 
 }

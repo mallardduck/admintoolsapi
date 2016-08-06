@@ -47,7 +47,7 @@ class Handler extends ExceptionHandler
     public function render($request, Exception $e)
     {
         if ($e instanceof CouldNotDownloadCertificate) {
-            return response()->json(['error' => "Timeout; the domain may not support SSL.", 'code' => 200]);
+            return response()->json(['error' => "Connection Timeout; the domain may not support SSL, or port 443 might be blocked.", 'code' => 200]);
         }
         return parent::render($request, $e);
     }

@@ -37,10 +37,11 @@ class HomeController extends Controller
         return response()->json($results);
     }
 
-    private function getIPinfo(Request $request, $raw=null) {
+    private function getIPinfo(Request $request, $raw = null)
+    {
         // Get needed vars
         $requesterIp = $request->ips();
-        if ( !is_null($raw) && ($raw != 0 || $raw == "") ) {
+        if (!is_null($raw) && ($raw != 0 || $raw == "")) {
             return $requesterIp['0'];
         }
         $databaseFile = './geoDb.mmdb';
@@ -78,7 +79,8 @@ class HomeController extends Controller
         return response()->json($results);
     }
 
-    private function sslchecker(Request $request, $full=false) {
+    private function sslchecker(Request $request, $full = false)
+    {
         // Get needed vars
         $requesterIp = $request->ips();
         $userAgent = $request->header('User-Agent');
@@ -96,12 +98,11 @@ class HomeController extends Controller
         $verifiedDomain = $domain['host'];
         // Attempt to get IP for domain provided and verify it
         $domainIp = gethostbyname($verifiedDomain);
-        if(!filter_var($domainIp, FILTER_VALIDATE_IP))
-        {
+        if (!filter_var($domainIp, FILTER_VALIDATE_IP)) {
             return ['error' => "Domain might be valid, but DNS is not.", 'code' => 200];
         }
         // Verify SSL
-        if ($full=true){
+        if ($full=true) {
             $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
             $sslRes = [
                 'domain' => $verifiedDomain,
@@ -117,10 +118,8 @@ class HomeController extends Controller
             ];
         } else {
             $sslRes = SslCertificate::createForHostName($verifiedDomain, 5);
-
         }
         // return output
         return $sslRes;
     }
-
 }

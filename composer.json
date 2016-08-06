@@ -46,8 +46,8 @@
             "Illuminate\\Foundation\\ComposerScripts::postUpdate",
             "php artisan optimize"
         ],
-        "cs": "./vendor/bin/phpcs --standard=PSR2 -np src/ tests/",
-        "cbf": "./vendor/bin/phpcbf --standard=PSR2 -np src/ tests/"
+        "cs": "./vendor/bin/phpcs --standard=PSR2 -np ./app/",
+        "cbf": "./vendor/bin/phpcbf --standard=PSR2 -np ./app/"
     },
     "config": {
         "preferred-install": "dist"

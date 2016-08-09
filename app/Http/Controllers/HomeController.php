@@ -21,35 +21,33 @@ class HomeController extends Controller
     {
         // Get IP info results
         $rawVar = $request->input('raw');
-        $results = $this->getIPinfo($request, $rawVar);
+        // If the rawVar is anything BUT null we pass true
+        $results = (gettype($rawVar) !== "NULL") ? $this->getIPinfo($request, true) : $this->getIPinfo($request);
+        // I don't care about raw=0, raw=false; this is the default state
         return $results;
-    }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function indexJson(Request $request)
-    {
-        // Get IP info results
-        $results = $this->getIPinfo($request);
-        return response()->json($results);
     }
 
     private function getIPinfo(Request $request, $raw = null)
     {
         // Get needed vars
         $requesterIp = $request->ips();
-        if (!is_null($raw) && ($raw != 0 || $raw == "")) {
-            return $requesterIp['0'];
+        $userAgent = $request->header('User-Agent');
+        $acceptsContentType = $request->header('Accept');
+        //If someone is hitting the .json route, they want json so we skip the next check
+        if (!$request->is('*.json')) {
+            // If curl and using default ContentType header, OR, if raw=true, they get the plain IP
+            // Current LW behaviour right here
+            if ( (stripos($userAgent, 'curl') !== false && ($acceptsContentType == '*/*')) || $raw ) {
+                return $requesterIp['0'];
+            }
         }
+        // If they are on the JSON route, or want JSON, we get them IP info
+        // Load the IP DB file, then initilize the reader
         $databaseFile = './geoDb.mmdb';
         $reader = new Reader($databaseFile);
         // Get IP info
         $geoIP = $reader->get($requesterIp[0]);
-        $userAgent = $request->header('User-Agent');
-        $acceptsContentType = $request->header('Accept');
+        // Return full JSON results
         return [
             'ips' => $requesterIp,
             'user-agent' => $userAgent,

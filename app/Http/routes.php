@@ -13,6 +13,6 @@
 
 Route::get('/', 'HomeController@index');
 Route::get('/ip', 'HomeController@index');
-Route::get('/ip.json', 'HomeController@indexJson');
+Route::get('/ip.json', 'HomeController@index');
 Route::get('/sslcheck', 'HomeController@sslIndex');
 Route::get('/sslcheck.json', 'HomeController@sslIndexJson');

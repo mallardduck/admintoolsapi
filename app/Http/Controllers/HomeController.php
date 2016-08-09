@@ -37,7 +37,7 @@ class HomeController extends Controller
         if (!$request->is('*.json')) {
             // If curl and using default ContentType header, OR, if raw=true, they get the plain IP
             // Current LW behaviour right here
-            if ( (stripos($userAgent, 'curl') !== false && ($acceptsContentType == '*/*')) || $raw ) {
+            if ( (stripos($userAgent, 'curl/') !== false && ($acceptsContentType !== 'text/json')) || $raw ) {
                 return $requesterIp['0'];
             }
         }

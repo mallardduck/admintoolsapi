@@ -36,8 +36,8 @@ class HomeController extends Controller
         //If someone is hitting the .json route, they want json so we skip the next check
         if (!$request->is('*.json')) {
             // If curl and using default ContentType header, OR, if raw=true, they get the plain IP
-            // Current LW behaviour right here
             if ( (stripos($userAgent, 'curl/') !== false && ($acceptsContentType !== 'text/json')) || $raw ) {
+                // Current LW behaviour right here
                 return $requesterIp['0'];
             }
         }
@@ -84,12 +84,17 @@ class HomeController extends Controller
         $userAgent = $request->header('User-Agent');
         $acceptsContentType = $request->header('Accept');
         $rawDomain = $request->input('domain');
+        if (gettype($rawDomain) == "NULL" || $rawDomain == "") {
+            return ['error' => "Error in request, proper domain and/or URL must be provdied", 'code' => 400];
+        }
         // Verify '//' is in input to validate URL properly
-        if (!preg_match('#//#', $request->input('domain'))) {
+        if (!preg_match('#//#', $rawDomain)) {
+            // If it's not there, we assume they gave us a FQDN and add it
             $rawDomain = '//'.$request->input('domain');
         }
-        // Parse URL, appending the '//' helps increase likelyhood we get a host component.
+        // Parse URL -- appending '//' above helps us get a host component.
         $domain = ($rawDomain) ? parse_url($rawDomain) : null;
+        // One last sanity check before we validate the DNS
         if (key_exists('host', $domain) == false) {
             return ['error' => "Error in request, proper domain and/or URL must be provdied", 'code' => 400];
         }
@@ -99,8 +104,8 @@ class HomeController extends Controller
         if (!filter_var($domainIp, FILTER_VALIDATE_IP)) {
             return ['error' => "Domain might be valid, but DNS is not.", 'code' => 200];
         }
-        // Verify SSL
-        if ($full=true) {
+        // If we had an IP, we can check to verify an SSL
+        if ($full == true) {
             $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
             $sslRes = [
                 'domain' => $verifiedDomain,
@@ -115,7 +120,9 @@ class HomeController extends Controller
                 ]
             ];
         } else {
-            $sslRes = SslCertificate::createForHostName($verifiedDomain, 5);
+            $validBoolean = SslCertificate::createForHostName($verifiedDomain, 5)->isValid();
+            // akin to the 'raw' IP style, we are brief
+            $sslRes = ($validBoolean) ? 'Valid' : 'Invalid';
         }
         // return output
         return $sslRes;

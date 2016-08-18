@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Cache;
 use MaxMind\Db\Reader;
 use Illuminate\Http\Request;
 use Spatie\SslCertificate\SslCertificate;
@@ -15,6 +16,9 @@ use Illuminate\Foundation\Auth\Access\AuthorizesResources;
 class Controller extends BaseController
 {
     use AuthorizesRequests, AuthorizesResources, DispatchesJobs, ValidatesRequests;
+
+    // Cache expiration time in minutes
+    public $cacheTTL = '120';
 
       public function getIPinfo(Request $request, $raw = null)
       {
@@ -73,7 +77,11 @@ class Controller extends BaseController
           }
           // If we had an IP, we can check to verify an SSL
           if ($full == true) {
-              $certificate = SslCertificate::createForHostName($verifiedDomain, 5);
+
+              $certificate = Cache::remember($verifiedDomain, $this->cacheTTL, function() use ($verifiedDomain) {
+                  return SslCertificate::createForHostName($verifiedDomain, 5);
+              });
+
               $sslRes = [
                   'domain' => $verifiedDomain,
                   'domain-ip' => $domainIp,
@@ -87,7 +95,9 @@ class Controller extends BaseController
                   ]
               ];
           } else {
-              $validBoolean = SslCertificate::createForHostName($verifiedDomain, 5)->isValid();
+              $validBoolean = Cache::remember('quick-'.$verifiedDomain, $this->cacheTTL, function() use ($verifiedDomain) {
+                  return SslCertificate::createForHostName($verifiedDomain, 5)->isValid();
+              });
               // akin to the 'raw' IP style, we are brief
               $sslRes = ($validBoolean) ? 'Valid' : 'Invalid';
           }

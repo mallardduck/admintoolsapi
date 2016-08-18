@@ -12,7 +12,7 @@ class SslController extends Controller
    *
    * @return \Illuminate\Http\Response
    */
-  public function sslIndex(Request $request)
+  public function index(Request $request)
   {
       $results = parent::sslchecker($request);
       return response()->json($results);
@@ -23,7 +23,7 @@ class SslController extends Controller
    *
    * @return \Illuminate\Http\Response
    */
-  public function sslIndexJson(Request $request)
+  public function indexJson(Request $request)
   {
       $results = parent::sslchecker($request, true);
       return response()->json($results);

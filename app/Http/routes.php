@@ -11,8 +11,22 @@
 |
 */
 
-Route::get('/', 'HomeController@index');
-Route::get('/ip', 'HomeController@index');
-Route::get('/ip.json', 'HomeController@index');
-Route::get('/sslcheck', 'HomeController@sslIndex');
-Route::get('/sslcheck.json', 'HomeController@sslIndexJson');
+Route::group(['domain' => 'ip.liquidweb.dev', 'as' => 'ip::'], function () {
+    Route::get('/', ['as' => 'home', 'uses' => 'IpController@index']);
+    Route::get('/ip', ['as' => 'ip', 'uses' => 'IpController@index']);
+    Route::get('/ip.json', ['as' => 'ipJson', 'uses' => 'IpController@index']);
+});
+
+Route::group(['domain' => 'sslcheck.liquidweb.dev', 'as' => 'ssl::'], function () {
+    Route::get('/', ['as' => 'home', 'uses' => 'SslController@sslIndexJson']);
+    Route::get('/sslcheck', ['as' => 'check', 'uses' => 'SslController@sslIndex']);
+    Route::get('/sslcheck.json', ['as' => 'checkjson', 'uses' => 'SslController@sslIndexJson']);
+});
+
+Route::group(['as' => 'main::'], function () {
+  Route::get('/', ['as' => 'home', 'uses' => 'IpController@index']);
+  Route::get('/ip', ['as' => 'ip', 'uses' => 'IpController@index']);
+  Route::get('/ip.json', ['as' => 'ipJson', 'uses' => 'IpController@index']);
+  Route::get('/sslcheck', ['as' => 'check', 'uses' => 'SslController@sslIndex']);
+  Route::get('/sslcheck.json', ['as' => 'checkJson', 'uses' => 'SslController@sslIndexJson']);
+});
